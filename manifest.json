@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Close Duplicate Tabs",
+  "version": "1.0.0",
+  "description": "Close duplicate website tabs while ignoring URL fragments.",
+  "permissions": ["tabs"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Close duplicate tabs"
+  },
+  "commands": {
+    "close-duplicate-tabs": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+D",
+        "mac": "MacCtrl+Shift+D"
+      },
+      "description": "Close duplicate tabs (ignoring #fragments)"
+    }
+  }
+}
