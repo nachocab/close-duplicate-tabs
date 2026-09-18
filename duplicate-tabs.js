@@ -43,3 +43,8 @@ export function findDuplicateTabIds(tabs, activeTabId) {
 
   return duplicateIds;
 }
+
+export function formatDuplicateCountBadge(count) {
+  if (count < 1) return "";
+  return count > 999 ? "999+" : String(count);
+}

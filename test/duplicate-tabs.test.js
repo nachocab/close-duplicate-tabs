@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { canonicalWebsiteUrl, findDuplicateTabIds } from "../duplicate-tabs.js";
+import {
+  canonicalWebsiteUrl,
+  findDuplicateTabIds,
+  formatDuplicateCountBadge,
+} from "../duplicate-tabs.js";
 
 test("canonicalWebsiteUrl removes fragments and preserves the rest of the URL", () => {
   assert.equal(
@@ -57,4 +61,11 @@ test("findDuplicateTabIds uses pendingUrl for a loading tab", () => {
   ];
 
   assert.deepEqual(findDuplicateTabIds(tabs), [2]);
+});
+
+test("formatDuplicateCountBadge hides zero and caps large counts", () => {
+  assert.equal(formatDuplicateCountBadge(0), "");
+  assert.equal(formatDuplicateCountBadge(7), "7");
+  assert.equal(formatDuplicateCountBadge(999), "999");
+  assert.equal(formatDuplicateCountBadge(1000), "999+");
 });

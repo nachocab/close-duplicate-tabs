@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Close Duplicate Tabs",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Close duplicate website tabs while ignoring URL fragments.",
   "permissions": ["tabs"],
   "background": {
