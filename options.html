@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Close Duplicate Tabs — Options</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --border: color-mix(in srgb, currentColor 25%, transparent);
+        --muted: color-mix(in srgb, currentColor 65%, transparent);
+      }
+
+      body {
+        max-width: 46rem;
+        margin: 0 auto;
+        padding: 2rem 1.5rem 3rem;
+        font:
+          15px/1.5 system-ui,
+          sans-serif;
+      }
+
+      h1 {
+        font-size: 1.4rem;
+        margin: 0 0 0.25rem;
+      }
+
+      h2 {
+        font-size: 1rem;
+        margin: 2rem 0 0.5rem;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 15rem;
+        padding: 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: transparent;
+        color: inherit;
+        font:
+          13px/1.5 ui-monospace,
+          monospace;
+        resize: vertical;
+        tab-size: 2;
+      }
+
+      textarea:focus-visible {
+        outline: 2px solid currentColor;
+        outline-offset: 1px;
+      }
+
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-top: 0.75rem;
+      }
+
+      button {
+        padding: 0.45rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: color-mix(in srgb, currentColor 8%, transparent);
+      }
+
+      kbd {
+        padding: 0.1rem 0.35rem;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        color: var(--muted);
+        font:
+          12px/1.5 ui-monospace,
+          monospace;
+      }
+
+      #status {
+        margin: 0;
+        white-space: pre-line;
+      }
+
+      #status[data-state="error"] {
+        color: #dc2626;
+      }
+
+      #status[data-state="saved"] {
+        color: #15803d;
+      }
+
+      code,
+      pre {
+        font:
+          13px/1.5 ui-monospace,
+          monospace;
+      }
+
+      pre {
+        padding: 0.75rem;
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+
+      th,
+      td {
+        padding: 0.4rem 0.6rem;
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      td:first-child {
+        white-space: nowrap;
+        font:
+          13px/1.5 ui-monospace,
+          monospace;
+      }
+
+      td {
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Matching rules</h1>
+    <p>
+      Tabs are duplicates when their URLs match, ignoring the
+      <code>#fragment</code> and the order of query parameters. Rules change that
+      for URLs you name: they loosen the comparison, so pages whose URLs carry
+      throwaway values — a random localhost port, a one-time OAuth code — still
+      group together, or they mark a URL as closable on sight.
+    </p>
+
+    <p>
+      Rule fields keep the order you write them in. Saving stores this text as
+      typed.
+    </p>
+
+    <label for="rules">Rules (JSON array)</label>
+    <textarea id="rules" spellcheck="false" aria-describedby="status"></textarea>
+
+    <div class="actions">
+      <button id="save" type="button">Save</button>
+      <kbd id="save-shortcut"></kbd>
+      <p id="status" role="status"></p>
+    </div>
+
+    <h2>Rule fields</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Meaning</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>match</td>
+          <td>
+            Required. Which URLs the rule applies to. <code>*</code> stands for
+            any run of characters and is the only special character; everything
+            else is literal. The whole URL must match.
+          </td>
+        </tr>
+        <tr>
+          <td>ignorePort</td>
+          <td>Group tabs that differ only by port number.</td>
+        </tr>
+        <tr>
+          <td>ignoreParams</td>
+          <td>
+            A list of query parameter names to drop before comparing, or
+            <code>"*"</code> to drop the query string entirely.
+          </td>
+        </tr>
+        <tr>
+          <td>matchTitle</td>
+          <td>
+            Also require equal tab titles. This narrows a rule and never widens
+            it: two tabs still need the same origin and path to group. Use it
+            when a rule drops so much of the URL that the title is the only
+            thing left telling two pages apart.
+          </td>
+        </tr>
+        <tr>
+          <td>closeAlways</td>
+          <td>
+            Close every matching tab, duplicate or not. For pages that carry no
+            information once you have read them, such as a
+            <em>you may close this window</em> callback. This is the one field
+            that can close the tab you are looking at, and it ignores pinning,
+            so keep its <code>match</code> narrow. It compares nothing, so it
+            cannot be combined with the three fields above.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p>
+      The first rule whose <code>match</code> fits a URL is the one that applies.
+    </p>
+
+    <h2>Examples</h2>
+    <p>
+      A local OAuth callback listener binds a random port per run and the
+      <code>code</code> is single-use, so neither belongs in the comparison. The
+      title is what identifies the page:
+    </p>
+    <pre>
+[
+  {
+    "match": "http://127.0.0.1:*/oauth/callback*",
+    "ignorePort": true,
+    "ignoreParams": "*",
+    "matchTitle": true
+  }
+]</pre
+    >
+    <p>
+      Or, if such a page is only ever there to be dismissed, close it on sight
+      instead of keeping one of them:
+    </p>
+    <pre>
+[
+  {
+    "match": "http://127.0.0.1:*/oauth/callback*",
+    "closeAlways": true
+  }
+]</pre
+    >
+    <p>Dropping one noisy parameter, such as a banner message:</p>
+    <pre>
+[
+  {
+    "match": "https://*.console.aws.amazon.com/*",
+    "ignoreParams": ["warningMsg"]
+  }
+]</pre
+    >
+    <script src="options.js" type="module"></script>
+  </body>
+</html>
