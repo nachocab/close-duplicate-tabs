@@ -32,15 +32,20 @@ function loadCompiledRules() {
   return compiledRulesPromise;
 }
 
-async function refreshClosableCount() {
-  const version = ++refreshVersion;
-  const [tabs, rules] = await Promise.all([
+// The tab kept is the active tab of the last focused window, the same one a
+// click or the shortcut acts from, so the badge matches what would be closed.
+async function findClosableTabIdsNow() {
+  const [tabs, activeTabs, rules] = await Promise.all([
     chrome.tabs.query({}),
+    chrome.tabs.query({ active: true, lastFocusedWindow: true }),
     loadCompiledRules(),
   ]);
-  // The active tab is left out, so the badge counts what a click would close
-  // from any window rather than from the window that happens to be focused.
-  const count = findClosableTabIds(tabs, undefined, rules).length;
+  return findClosableTabIds(tabs, activeTabs[0]?.id, rules);
+}
+
+async function refreshClosableCount() {
+  const version = ++refreshVersion;
+  const count = (await findClosableTabIdsNow()).length;
 
   if (version !== refreshVersion) return;
 
@@ -68,13 +73,7 @@ function scheduleRefresh() {
 }
 
 async function closeTabs() {
-  const [tabs, activeTabs, rules] = await Promise.all([
-    chrome.tabs.query({}),
-    chrome.tabs.query({ active: true, lastFocusedWindow: true }),
-    loadCompiledRules(),
-  ]);
-  const activeTabId = activeTabs[0]?.id;
-  const closableIds = findClosableTabIds(tabs, activeTabId, rules);
+  const closableIds = await findClosableTabIdsNow();
 
   if (closableIds.length > 0) await chrome.tabs.remove(closableIds);
   await refreshClosableCount();
@@ -97,6 +96,10 @@ chrome.action.onClicked.addListener(() => {
 chrome.tabs.onCreated.addListener(scheduleRefresh);
 chrome.tabs.onRemoved.addListener(scheduleRefresh);
 chrome.tabs.onReplaced.addListener(scheduleRefresh);
+// The active tab is spared when it is a New Tab page, so switching tabs or
+// windows can change the count.
+chrome.tabs.onActivated.addListener(scheduleRefresh);
+chrome.windows.onFocusChanged.addListener(scheduleRefresh);
 chrome.tabs.onUpdated.addListener((_tabId, changeInfo) => {
   // A rule with "matchTitle" reads tab titles, so a title arriving late can
   // change the count on its own.

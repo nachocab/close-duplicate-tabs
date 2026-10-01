@@ -7,6 +7,7 @@ import {
   findClosableTabIds,
   formatCountBadge,
   globToRegExp,
+  isNewTabUrl,
   parseRules,
   tabDuplicateKey,
 } from "../duplicate-tabs.js";
@@ -79,6 +80,36 @@ test("findClosableTabIds uses pendingUrl for a loading tab", () => {
   const tabs = [
     { id: 1, pendingUrl: "https://example.com/page#loading" },
     { id: 2, url: "https://example.com/page#loaded" },
+  ];
+
+  assert.deepEqual(findClosableTabIds(tabs), [2]);
+});
+
+test("isNewTabUrl recognizes New Tab pages and nothing else", () => {
+  assert.ok(isNewTabUrl("chrome://newtab/"));
+  assert.ok(isNewTabUrl("brave://newtab/"));
+  assert.ok(isNewTabUrl("chrome://new-tab-page/"));
+  assert.equal(isNewTabUrl("brave://settings/"), false);
+  assert.equal(isNewTabUrl("https://newtab/"), false);
+  assert.equal(isNewTabUrl(undefined), false);
+});
+
+test("findClosableTabIds closes every New Tab page except the active one", () => {
+  const tabs = [
+    { id: 1, url: "chrome://newtab/", title: "New Tab" },
+    { id: 2, url: "chrome://newtab/", title: "New Tab" },
+    { id: 3, pendingUrl: "chrome://newtab/" },
+    { id: 4, url: "https://example.com/" },
+  ];
+
+  assert.deepEqual(findClosableTabIds(tabs, 2), [1, 3]);
+  assert.deepEqual(findClosableTabIds([tabs[0]]), [1]);
+});
+
+test("findClosableTabIds keeps a pinned New Tab page", () => {
+  const tabs = [
+    { id: 1, url: "chrome://newtab/", pinned: true },
+    { id: 2, url: "chrome://newtab/" },
   ];
 
   assert.deepEqual(findClosableTabIds(tabs), [2]);

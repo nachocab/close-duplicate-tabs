@@ -1,6 +1,10 @@
 const COMPARE_KEYS = ["ignorePort", "ignoreParams", "matchTitle"];
 const RULE_KEYS = new Set(["match", "closeAlways", ...COMPARE_KEYS]);
 const GLOB_SPECIALS = /[.*+?^${}()|[\]\\]/g;
+// Brave reports its New Tab page to extensions as chrome://newtab/, and Chrome's
+// own page can also appear as chrome://new-tab-page/.
+const NEW_TAB_PROTOCOLS = new Set(["chrome:", "brave:", "edge:"]);
+const NEW_TAB_HOSTS = new Set(["newtab", "new-tab-page"]);
 
 export function canonicalWebsiteUrl(rawUrl) {
   if (!rawUrl) return null;
@@ -16,6 +20,17 @@ export function canonicalWebsiteUrl(rawUrl) {
     return url.href;
   } catch {
     return null;
+  }
+}
+
+export function isNewTabUrl(rawUrl) {
+  if (!rawUrl) return false;
+
+  try {
+    const url = new URL(rawUrl);
+    return NEW_TAB_PROTOCOLS.has(url.protocol) && NEW_TAB_HOSTS.has(url.host);
+  } catch {
+    return false;
   }
 }
 
@@ -160,6 +175,14 @@ export function findClosableTabIds(tabs, activeTabId, rules = []) {
 
   for (const tab of tabs) {
     if (!Number.isInteger(tab.id)) continue;
+
+    // An empty New Tab page holds nothing to lose, so every one goes except the
+    // tab being looked at, which is likely about to receive a URL, and a pinned
+    // one, which was kept deliberately.
+    if (isNewTabUrl(tab.url ?? tab.pendingUrl)) {
+      if (tab.id !== activeTabId && !tab.pinned) closableIds.push(tab.id);
+      continue;
+    }
 
     const { closeAlways, key } = classifyTab(tab, rules);
 

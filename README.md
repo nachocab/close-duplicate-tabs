@@ -21,6 +21,8 @@ Query values still matter, so `https://example.com/docs?lang=en` and `https://ex
 
 The extension icon shows the number of tabs that would be closed. Click the icon to close them, or press `Ctrl+Shift+D`—on macOS that is `Control+Shift+D`, not `Command+Shift+D`, because Brave keeps `Command+Shift+D` for its own **Bookmark all tabs** command. Within a group of duplicates the currently active tab is kept; otherwise a pinned tab is kept, then the first matching tab.
 
+Empty **New Tab** pages are closed too, even a lone one, except the New Tab you are currently on and any pinned New Tab.
+
 Open `brave://extensions/shortcuts` to see which key the command actually got, or to assign a different one. A suggested shortcut is dropped silently when something else already holds it, so an unassigned command there is the first thing to check if the keystroke does nothing.
 
 Reloading matters during development: after editing any file in this folder, click the reload icon on the extension's card in `brave://extensions`. Brave keeps running the old service worker until you do.
