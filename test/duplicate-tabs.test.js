@@ -46,6 +46,30 @@ test("canonicalWebsiteUrl ignores non-web and invalid URLs", () => {
   assert.equal(canonicalWebsiteUrl("not a URL"), null);
 });
 
+test("findClosableTabIds treats a trailing slash as a duplicate", () => {
+  const tabs = [
+    { id: 1, url: "https://github.com/evinova/tenant-pipeline-bms-terminology" },
+    { id: 2, url: "https://github.com/evinova/tenant-pipeline-bms-terminology/" },
+    { id: 3, url: "https://github.com/" },
+    { id: 4, url: "https://github.com" },
+  ];
+
+  assert.deepEqual(findClosableTabIds(tabs, 1), [2, 4]);
+  assert.equal(
+    tabDuplicateKey({ url: "https://example.com/docs/?a=1#top" }),
+    tabDuplicateKey({ url: "https://example.com/docs?a=1" }),
+  );
+});
+
+test("rule patterns see the trailing slash", () => {
+  const rules = rulesFor({ match: "https://example.com/docs/*", ignoreParams: "*" });
+
+  assert.equal(
+    tabDuplicateKey({ url: "https://example.com/docs/?a=1" }, rules),
+    "https://example.com/docs",
+  );
+});
+
 test("findClosableTabIds treats fragment-only differences as duplicates", () => {
   const tabs = [
     { id: 1, url: "https://example.com/docs#first" },

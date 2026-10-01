@@ -2,12 +2,13 @@
 
 ![Close Duplicate Tabs icon](icons/icon-128.png)
 
-A tiny Manifest V3 extension for Brave and other Chromium browsers. It closes duplicate website tabs across all browser windows and treats URLs that differ only by their `#fragment`, or by the order of their query parameters, as duplicates.
+A tiny Manifest V3 extension for Brave and other Chromium browsers. It closes duplicate website tabs across all browser windows and treats URLs that differ only by their `#fragment`, a trailing `/`, or the order of their query parameters as duplicates.
 
 For example, these count as the same page:
 
 - `https://example.com/docs#introduction`
 - `https://example.com/docs#installation`
+- `https://example.com/docs/`
 - `https://example.com/docs?a=1&b=2` and `https://example.com/docs?b=2&a=1`
 
 Query values still matter, so `https://example.com/docs?lang=en` and `https://example.com/docs?lang=es` are not duplicates. To loosen that for specific URLs, see [Matching rules](#matching-rules).

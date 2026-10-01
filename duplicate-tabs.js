@@ -137,12 +137,21 @@ export function compileRules(rules) {
   return { rules: compiled, errors };
 }
 
+// A trailing slash is dropped from the key alone, so /docs and /docs/ group
+// together while rule patterns still see the URL as the address bar shows it.
+function urlKey(url) {
+  if (url.pathname.length > 1 && url.pathname.endsWith("/")) {
+    url.pathname = url.pathname.replace(/\/+$/, "");
+  }
+  return url.href;
+}
+
 function classifyTab(tab, rules) {
   const canonicalUrl = canonicalWebsiteUrl(tab.url ?? tab.pendingUrl);
   if (!canonicalUrl) return { closeAlways: false, key: null };
 
   const rule = rules.find((candidate) => candidate.pattern.test(canonicalUrl));
-  if (!rule) return { closeAlways: false, key: canonicalUrl };
+  if (!rule) return { closeAlways: false, key: urlKey(new URL(canonicalUrl)) };
   if (rule.closeAlways) return { closeAlways: true, key: null };
 
   const url = new URL(canonicalUrl);
@@ -151,7 +160,7 @@ function classifyTab(tab, rules) {
   if (rule.ignoreAllParams) url.search = "";
   else for (const name of rule.ignoreParams) url.searchParams.delete(name);
 
-  if (!rule.matchTitle) return { closeAlways: false, key: url.href };
+  if (!rule.matchTitle) return { closeAlways: false, key: urlKey(url) };
 
   // A title joins the key rather than replacing the URL, so a rule can loosen a
   // port or a parameter but can never group two different origins or paths. A
@@ -159,7 +168,7 @@ function classifyTab(tab, rules) {
   const title = tab.title ?? "";
   return {
     closeAlways: false,
-    key: title === "" ? null : `${url.href}\n${title}`,
+    key: title === "" ? null : `${urlKey(url)}\n${title}`,
   };
 }
 
